@@ -3,27 +3,27 @@ const arrayColumn = (arr, n) => arr.map((x) => x[n]);
 
 // Function for displaying the data as table
 function showData(columnNames, dataArray) {
-    var table = document.createElement('table');
+    let table = document.createElement('table');
     document.body.appendChild(table);
 
     // Row for Headings 
-    var tableHeadRow = document.createElement('tr');
+    let tableHeadRow = document.createElement('tr');
     table.appendChild(tableHeadRow);
-    for (var i = 0; i < columnNames.length; i++) {
-        var th = document.createElement('th'),
+    for (let i = 0; i < columnNames.length; i++) {
+        let th = document.createElement('th'),
             thText = document.createTextNode(columnNames[i]);
         th.appendChild(thText);
         tableHeadRow.appendChild(th);
     }
 
     // Rows for all entries
-    for (var i = 0; i < dataArray.length; i++) {
-        var row = dataArray[i];
-        var tableRow = document.createElement('tr');
-        for (var j = 0; j < row.length; j++) {
+    for (let i = 0; i < dataArray.length; i++) {
+        let row = dataArray[i];
+        let tableRow = document.createElement('tr');
+        for (let j = 0; j < row.length; j++) {
             table.appendChild(tableRow);
-            var td = document.createElement('td');
-            var tdText = document.createTextNode(row[j]);
+            let td = document.createElement('td');
+            let tdText = document.createTextNode(row[j]);
             td.appendChild(tdText);
             tableRow.appendChild(td);
         }
@@ -34,28 +34,88 @@ function showData(columnNames, dataArray) {
 function stringToDate(d) {
     // 17/05/2021 16:30:50
     // 17/05/2021
-    var date = d.substr(0, 2);
-    var month = d.substr(3, 2);
-    var year = d.substr(6, 4);
-    var result = year + "-" + month + "-" + date;
+    let date = d.substr(0, 2);
+    let month = d.substr(3, 2);
+    let year = d.substr(6, 4);
+    let result = year + "-" + month + "-" + date;
     if (d.length == 19) {   // for Registration Time Stamp
-        var hour = d.substr(11, 2);
-        var minute = d.substr(14, 2);
-        var second = d.substr(17, 2);
+        let hour = d.substr(11, 2);
+        let minute = d.substr(14, 2);
+        let second = d.substr(17, 2);
         result += "T" + hour + ":" + minute + ":" + second;
     }
     return new Date(result);
+}
+
+// Function for updating/correcting category column
+function updateCatetgory(data, dividingDate) {
+    let date = new Date(dividingDate);
+    data.forEach((element, index) => {
+        if (element[4] == 4 || element[4] == 5) {
+            if (stringToDate(element[3]).getTime() < date.getTime()) {
+                data[index][4] = 4;
+            }
+            else {
+                data[index][4] = 5;
+            }
+        }
+    });
+}
+
+// Function for updating birthdate and registration time to Date Object
+function updateDateTime(dataset) {
+    dataset.forEach((element, index) => {
+        dataset[index][3] = stringToDate(element[3]);
+        dataset[index][5] = stringToDate(element[5]);
+    });
+}
+
+// Function for caluculating with FCFS algorithm
+function fcfs(dataset, vaccinesPerDay) {
+
+    // Sorting according to Registration Time
+    dataset.sort((a, b) => a[5] - b[5]);
+    console.log(dataset);
+    let currentDate = new Date("2021-05-11T23:59:59");
+    let buffer = [];
+    let result = [];
+    let vaccinetedPerDay = [];
+    let dayCount = 0;
+    dataset.forEach((element, index) => {
+        if (element[5].getTime() > currentDate.getTime()) {
+            currentDate.setDate(currentDate.getDate() + 1);
+            dayCount++;
+            let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
+            result = result.concat(Array(today.length).fill(dayCount));
+            vaccinetedPerDay.push(today.length);
+        }
+        buffer.push(index);
+    });
+    while (buffer.length) {
+        currentDate.setDate(currentDate.getDate() + 1);
+        dayCount++;
+        let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
+        result = result.concat(Array(today.length).fill(dayCount));
+        vaccinetedPerDay.push(today.length);
+    }
+    console.log(result);
+    console.log(vaccinetedPerDay);
+}
+
+// Function for calculating with Priority (Category) algorithm
+function priority(dataset, vaccinesPerDay) {
+    
 }
 
 // Event Listener for Calculate
 document.getElementById("calculate").onclick = () => {
 
     // When calculate is pressed, Show Data button appears
-    var showDataButton = document.getElementById("show-data-button");
-    showDataButton.classList.toggle("visible");
+    let showDataButton = document.getElementById("show-data-button");
+    showDataButton.classList.add("visible");
 
     // Accessing the file uploaded in input
-    var file = document.getElementById("file");
+    let file = document.getElementById("file");
     readXlsxFile(file.files[0]).then(function (data) {
 
         // Removing the features row from main dataset
@@ -63,19 +123,9 @@ document.getElementById("calculate").onclick = () => {
 
         // Using only first 20 rows
         data = data.slice(0, 20);
-        
+
         //Updating Category column for values 4 and 5 accoording to birthdate
-        var dividingDate = new Date("1976-05-10T00:00:00");
-        data.forEach((element, index) => {
-            if (element[4] == 4 || element[4] == 5) {
-                if (stringToDate(element[3]).getTime() < dividingDate.getTime()) {
-                    data[index][4] = 4;
-                }
-                else {
-                    data[index][4] = 5;
-                }
-            }
-        });
+        updateCatetgory(data, "1976-05-10T00:00:00");
 
         // Event Listener for Show Data button
         showDataButton.onclick = () => {
@@ -83,15 +133,18 @@ document.getElementById("calculate").onclick = () => {
         };
 
         // Copying the data to run operations on it
-        var dataset = JSON.parse(JSON.stringify(data));
+        let dataset = JSON.parse(JSON.stringify(data));
 
         // Updating Birthdate and Registration Time columns to Date object
-        dataset.forEach((element, index) => {
-            dataset[index][3] = stringToDate(element[3]);
-            dataset[index][5] = stringToDate(element[5]);
-        });
+        updateDateTime(dataset);
 
-        // dataset.sort((a, b) => a[5] - b[5]);
-        console.log(dataset);
+        let vaccinesPerDay = 100;
+        let algorithm = document.querySelector('input[name="algorithm"]:checked').value;
+        if (algorithm == "fcfs") {
+            fcfs(dataset, vaccinesPerDay);
+        }
+        else if (algorithm == "priority") {
+            priority(dataset, vaccinesPerDay);
+        }
     });
 };

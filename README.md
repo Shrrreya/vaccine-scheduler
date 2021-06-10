@@ -1,24 +1,26 @@
 # Vaccine Scheduler
+
 Scheduler for Vaccine Distribution
 
-## Category : 
+## Category
 
-1 - Medical (Doctors, Medical staff, Medical Students)
+**1** - Medical (Doctors, Medical staff, Medical Students)
 
-2 - Front Line Workers(Police, Army)
+**2** - Front Line Workers(Police, Army)
 
-3 - People having serious health issue
+**3** - People having serious health issue
 
-4 - Age >=45
+**4** - Age >= 45
 
-5 - Other
+**5** - Other
 
+## Algorithms
 
-**FCFS** - Scheduled according to registration time.
+- **FCFS** - Scheduled according to registration time.
 
-**Priority** - Scheduled according to Category and then FCFS.
+- **Priority** - Scheduled according to Category and then FCFS.
 
-**Excel data format :**
+## Data Example
 
 | Name            | Aadhar Card Number | Phone Number | Date Of Birth | Category | Registration Time Stamp |
 |-----------------|--------------------|--------------|---------------|----------|-------------------------|
