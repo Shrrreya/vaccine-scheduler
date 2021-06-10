@@ -70,53 +70,11 @@ function updateDateTime(dataset) {
     });
 }
 
-// Function for caluculating with FCFS algorithm
-function fcfs(dataset, vaccinesPerDay) {
-
+// Function to calculate schedule
+function calculateSchedule(dataset, vaccinesPerDay, algorithm) {
+    
     // Sorting according to Registration Time
     dataset.sort((a, b) => a[5] - b[5]);
-    console.log(dataset);
-    let currentDate = new Date(dataset[0][5].getTime());
-    currentDate.setHours(23, 59, 59);
-    let buffer = [];
-    let result = [];
-    let vaccinetedPerDay = [];
-    let vaccineSequence = [];
-    let dayCount = 0;
-
-    // Adding elements to buffer
-    dataset.forEach((element, index) => {
-        if (element[5].getTime() > currentDate.getTime()) {
-            currentDate.setDate(currentDate.getDate() + 1);
-            dayCount++;
-            let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
-            vaccineSequence = vaccineSequence.concat(today);
-            result = result.concat(Array(today.length).fill(dayCount));
-            vaccinetedPerDay.push(today.length);
-        }
-        buffer.push(index);
-    });
-
-    // If the buffer has some elements
-    while (buffer.length) {
-        currentDate.setDate(currentDate.getDate() + 1);
-        dayCount++;
-        let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
-        vaccineSequence = vaccineSequence.concat(today);
-        result = result.concat(Array(today.length).fill(dayCount));
-        vaccinetedPerDay.push(today.length);
-    }
-    console.log(result);
-    console.log(vaccineSequence);
-    console.log(vaccinetedPerDay);
-}
-
-// Function for calculating with Priority (Category) algorithm
-function priority(dataset, vaccinesPerDay) {
-
-    // Sorting according to Registration Time
-    dataset.sort((a, b) => a[5] - b[5]);
-    console.log(dataset);
     let currentDate = new Date(dataset[0][5].getTime());
     currentDate.setHours(23, 59, 59);
     let buffer = [];
@@ -142,7 +100,9 @@ function priority(dataset, vaccinesPerDay) {
         if (element[5].getTime() > currentDate.getTime()) {
             currentDate.setDate(currentDate.getDate() + 1);
             dayCount++;
-            buffer.sort(priorityCompare);
+            if (algorithm == "priority") {
+                buffer.sort(priorityCompare);
+            }
             let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
             vaccineSequence = vaccineSequence.concat(today);
             result = result.concat(Array(today.length).fill(dayCount));
@@ -155,7 +115,9 @@ function priority(dataset, vaccinesPerDay) {
     while (buffer.length) {
         currentDate.setDate(currentDate.getDate() + 1);
         dayCount++;
-        buffer.sort(priorityCompare);
+        if (algorithm == "priority") {
+            buffer.sort(priorityCompare);
+        }
         let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
         vaccineSequence = vaccineSequence.concat(today);
         result = result.concat(Array(today.length).fill(dayCount));
@@ -181,7 +143,7 @@ document.getElementById("calculate").onclick = () => {
         dataColumns = data.shift();
 
         // Using only first 20 rows
-        data = data.slice(0, 20);
+        // data = data.slice(0, 20);
 
         //Updating Category column for values 4 and 5 accoording to birthdate
         updateCatetgory(data, "1976-05-10T00:00:00");
@@ -199,6 +161,7 @@ document.getElementById("calculate").onclick = () => {
 
         let vaccinesPerDay = 100;
         let algorithm = document.querySelector('input[name="algorithm"]:checked').value;
+        calculateSchedule(dataset, vaccinesPerDay, algorithm);
         if (algorithm == "fcfs") {
             fcfs(dataset, vaccinesPerDay);
         }
