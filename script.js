@@ -76,35 +76,94 @@ function fcfs(dataset, vaccinesPerDay) {
     // Sorting according to Registration Time
     dataset.sort((a, b) => a[5] - b[5]);
     console.log(dataset);
-    let currentDate = new Date("2021-05-11T23:59:59");
+    let currentDate = new Date(dataset[0][5].getTime());
+    currentDate.setHours(23, 59, 59);
     let buffer = [];
     let result = [];
     let vaccinetedPerDay = [];
+    let vaccineSequence = [];
     let dayCount = 0;
+
+    // Adding elements to buffer
     dataset.forEach((element, index) => {
         if (element[5].getTime() > currentDate.getTime()) {
             currentDate.setDate(currentDate.getDate() + 1);
             dayCount++;
             let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
+            vaccineSequence = vaccineSequence.concat(today);
             result = result.concat(Array(today.length).fill(dayCount));
             vaccinetedPerDay.push(today.length);
         }
         buffer.push(index);
     });
+
+    // If the buffer has some elements
     while (buffer.length) {
         currentDate.setDate(currentDate.getDate() + 1);
         dayCount++;
         let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
+        vaccineSequence = vaccineSequence.concat(today);
         result = result.concat(Array(today.length).fill(dayCount));
         vaccinetedPerDay.push(today.length);
     }
     console.log(result);
+    console.log(vaccineSequence);
     console.log(vaccinetedPerDay);
 }
 
 // Function for calculating with Priority (Category) algorithm
 function priority(dataset, vaccinesPerDay) {
-    
+
+    // Sorting according to Registration Time
+    dataset.sort((a, b) => a[5] - b[5]);
+    console.log(dataset);
+    let currentDate = new Date(dataset[0][5].getTime());
+    currentDate.setHours(23, 59, 59);
+    let buffer = [];
+    let result = [];
+    let vaccinetedPerDay = [];
+    let vaccineSequence = [];
+    let dayCount = 0;
+
+    function priorityCompare(a, b) {
+        if (dataset[a][4] < dataset[b][4]) {
+            return -1;
+        }
+        else if (dataset[a][4] > dataset[b][4]) {
+            return 1;
+        }
+        else {
+            return dataset[a][5] - dataset[b][5];
+        }
+    }
+
+    // Adding elements to buffer
+    dataset.forEach((element, index) => {
+        if (element[5].getTime() > currentDate.getTime()) {
+            currentDate.setDate(currentDate.getDate() + 1);
+            dayCount++;
+            buffer.sort(priorityCompare);
+            let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
+            vaccineSequence = vaccineSequence.concat(today);
+            result = result.concat(Array(today.length).fill(dayCount));
+            vaccinetedPerDay.push(today.length);
+        }
+        buffer.push(index);
+    });
+
+    // If the buffer has some elements
+    while (buffer.length) {
+        currentDate.setDate(currentDate.getDate() + 1);
+        dayCount++;
+        buffer.sort(priorityCompare);
+        let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
+        vaccineSequence = vaccineSequence.concat(today);
+        result = result.concat(Array(today.length).fill(dayCount));
+        vaccinetedPerDay.push(today.length);
+    }
+    console.log(result);
+    console.log(vaccineSequence);
+    console.log(vaccinetedPerDay);
 }
 
 // Event Listener for Calculate
