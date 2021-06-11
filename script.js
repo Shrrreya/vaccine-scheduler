@@ -70,9 +70,19 @@ function updateDateTime(dataset) {
     });
 }
 
+// Function to find Days Span of dataset
+function findDaysSpan(dataset) {
+    dataset.sort((a, b) => a[5] - b[5]);
+    let date1 = new Date(dataset[0][5].getTime());
+    let date2 = new Date(dataset[dataset.length - 1][5].getTime());
+    date1.setHours(0, 0, 0);
+    date2.setHours(0, 0, 0);
+    return (date2.getTime() - date1.getTime()) / (1000 * 60 * 60 * 24) + 1;
+}
+
 // Function to calculate schedule
 function calculateSchedule(dataset, vaccinesPerDay, algorithm) {
-    
+
     // Sorting according to Registration Time
     dataset.sort((a, b) => a[5] - b[5]);
     let currentDate = new Date(dataset[0][5].getTime());
@@ -126,6 +136,7 @@ function calculateSchedule(dataset, vaccinesPerDay, algorithm) {
     console.log(result);
     console.log(vaccineSequence);
     console.log(vaccinetedPerDay);
+    return vaccinetedPerDay.length;
 }
 
 // Event Listener for Calculate
@@ -133,7 +144,7 @@ document.getElementById("calculate").onclick = () => {
 
     // When calculate is pressed, Show Data button appears
     let showDataButton = document.getElementById("show-data-button");
-    showDataButton.classList.add("visible");
+    showDataButton.classList.remove("visible");
 
     // Accessing the file uploaded in input
     let file = document.getElementById("file");
@@ -150,7 +161,7 @@ document.getElementById("calculate").onclick = () => {
 
         // Event Listener for Show Data button
         showDataButton.onclick = () => {
-            showData(dataColumns, data);
+            showData(dataColumns, data.slice(0, 20));
         };
 
         // Copying the data to run operations on it
@@ -159,14 +170,67 @@ document.getElementById("calculate").onclick = () => {
         // Updating Birthdate and Registration Time columns to Date object
         updateDateTime(dataset);
 
-        let vaccinesPerDay = 100;
+        let datasetDaysSpan = findDaysSpan(dataset);
+        console.log(datasetDaysSpan);
+
         let algorithm = document.querySelector('input[name="algorithm"]:checked').value;
-        calculateSchedule(dataset, vaccinesPerDay, algorithm);
-        if (algorithm == "fcfs") {
-            fcfs(dataset, vaccinesPerDay);
+
+        let vaccinesPerDayData = [];
+        let vaccinesPerDayLabelData = [];
+        for (let vaccinesPerDay = 1;; vaccinesPerDay += 1) {
+            vaccinesPerDayLabelData.push(vaccinesPerDay);
+            let daysToGetVaccineted = calculateSchedule(dataset, vaccinesPerDay, 'fcfs');
+            vaccinesPerDayData.push(daysToGetVaccineted);
+            if (daysToGetVaccineted == datasetDaysSpan) {
+                break;
+            }
         }
-        else if (algorithm == "priority") {
-            priority(dataset, vaccinesPerDay);
-        }
+
+        let vaccinesPerDayChartCanvas = document.createElement('canvas');
+        vaccinesPerDayChartCanvas.id = "vaccines-day-chart";
+        let vaccinesPerDayChartDiv = document.createElement('div');
+        vaccinesPerDayChartDiv.id = "vaccines-day-chart-div";
+        vaccinesPerDayChartDiv.appendChild(vaccinesPerDayChartCanvas);
+        document.body.appendChild(vaccinesPerDayChartDiv);
+
+        new Chart(document.getElementById('vaccines-day-chart'), {
+            type: 'line',
+            data: {
+                labels: vaccinesPerDayLabelData,
+                datasets: [
+                    {
+                        label: "Max Number Of Days",
+                        borderColor: '#DC3912',
+                        data: vaccinesPerDayData
+                    }
+                ]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: ['Vaccines Per Day', 'Maximum Number of Days of Vaccination']
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Vaccines Per Day'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: ['Maximum Number of Days of Vaccination', 'Logairthmic Scale']
+                        },
+                        type: 'logarithmic'
+                    }
+                }
+
+            }
+        });
     });
 };

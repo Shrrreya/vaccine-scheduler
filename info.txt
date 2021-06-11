@@ -1,2 +1,12 @@
 https://www.randomlists.com/random-names - To generate random names
+
+let nameList=document.getElementsByClassName("Rand-stage")[0].firstElementChild.children;
+
+for (let i=0;i<2000;i++)
+{
+    document.write(nameList[i].innerText);
+    document.write("<br>");
+}
+
+
 https://www.tablesgenerator.com/markdown_tables - To generate markdown readme table
