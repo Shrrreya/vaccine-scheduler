@@ -71,26 +71,28 @@ function updateDateTime(dataset) {
 }
 
 // Function to find Days Span of dataset
-function findDaysSpan(dataset) {
-    dataset.sort((a, b) => a[5] - b[5]);
-    let date1 = new Date(dataset[0][5].getTime());
-    let date2 = new Date(dataset[dataset.length - 1][5].getTime());
+
+function findDaysSpan(d1, d2) {
+    let date1 = new Date(d1.getTime());
+    let date2 = new Date(d2.getTime());
     date1.setHours(0, 0, 0);
     date2.setHours(0, 0, 0);
     return (date2.getTime() - date1.getTime()) / (1000 * 60 * 60 * 24) + 1;
 }
 
 // Function to calculate schedule
-function calculateSchedule(dataset, vaccinesPerDay, algorithm) {
+function calculateSchedule(dataset, vaccinesPerDay, algorithm = 'fcfs') {
 
     // Sorting according to Registration Time
-    dataset.sort((a, b) => a[5] - b[5]);
+    // dataset.sort((a, b) => a[5] - b[5]);
     let currentDate = new Date(dataset[0][5].getTime());
-    currentDate.setHours(23, 59, 59);
+    currentDate.setHours(0, 0, 0);
+    currentDate.setDate(currentDate.getDate() + 1);
     let buffer = [];
-    let result = [];
+    let dayOfVaccine = [];
     let vaccinetedPerDay = [];
     let vaccineSequence = [];
+    let daysFromRegistration = [];
     let dayCount = 0;
 
     function priorityCompare(a, b) {
@@ -105,38 +107,127 @@ function calculateSchedule(dataset, vaccinesPerDay, algorithm) {
         }
     }
 
+
     // Adding elements to buffer
     dataset.forEach((element, index) => {
-        if (element[5].getTime() > currentDate.getTime()) {
-            currentDate.setDate(currentDate.getDate() + 1);
+
+        if (element[5].getTime() >= currentDate.getTime()) {
+
             dayCount++;
             if (algorithm == "priority") {
                 buffer.sort(priorityCompare);
             }
-            let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
+            let filteredBuffer = buffer.filter(bufferElement =>
+                dataset[bufferElement][5].getTime() < currentDate.getTime());
+            let today = filteredBuffer.splice(0, Math.min(vaccinesPerDay, filteredBuffer.length));
+            buffer = buffer.filter(x => !today.includes(x));
             vaccineSequence = vaccineSequence.concat(today);
-            result = result.concat(Array(today.length).fill(dayCount));
+            dayOfVaccine = dayOfVaccine.concat(Array(today.length).fill(dayCount));
             vaccinetedPerDay.push(today.length);
+
+            today.forEach(element => {
+                daysFromRegistration.push(findDaysSpan(dataset[element][5], currentDate));
+                daysFromRegistration[daysFromRegistration.length - 1]--;
+            });
+            currentDate.setDate(currentDate.getDate() + 1);
         }
         buffer.push(index);
     });
 
     // If the buffer has some elements
     while (buffer.length) {
-        currentDate.setDate(currentDate.getDate() + 1);
+
         dayCount++;
         if (algorithm == "priority") {
             buffer.sort(priorityCompare);
         }
-        let today = buffer.splice(0, Math.min(vaccinesPerDay, buffer.length));
+        let filteredBuffer = buffer.filter(bufferElement =>
+            dataset[bufferElement][5].getTime() < currentDate.getTime());
+        let today = filteredBuffer.splice(0, Math.min(vaccinesPerDay, filteredBuffer.length));
+        buffer = buffer.filter(x => !today.includes(x));
         vaccineSequence = vaccineSequence.concat(today);
-        result = result.concat(Array(today.length).fill(dayCount));
+        dayOfVaccine = dayOfVaccine.concat(Array(today.length).fill(dayCount));
         vaccinetedPerDay.push(today.length);
+
+        today.forEach(element => {
+            daysFromRegistration.push(findDaysSpan(dataset[element][5], currentDate));
+            daysFromRegistration[daysFromRegistration.length - 1]--;
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
     }
-    console.log(result);
-    console.log(vaccineSequence);
-    console.log(vaccinetedPerDay);
-    return vaccinetedPerDay.length;
+
+    return {
+        dayOfVaccine,
+        vaccineSequence,
+        vaccinetedPerDay,
+        daysFromRegistration
+    };
+}
+
+//Function to get Vaccines Per Day Data
+function getVaccineSchedulerData(dataset, datasetDaysSpan) {
+    let vaccineSchedulerData = [[], []];
+    let algorithms = ['fcfs', 'priority'];
+    for (let vaccinesPerDay = 1; ; vaccinesPerDay += 1) {
+        algorithms.forEach((algorithm, index) => {
+            let scheduleResult = calculateSchedule(dataset, vaccinesPerDay, algorithm);
+            vaccineSchedulerData[index].push(scheduleResult);
+        });
+        if (vaccineSchedulerData[0][vaccinesPerDay - 1].vaccinetedPerDay.length == datasetDaysSpan) {
+            break;
+        }
+    }
+    return vaccineSchedulerData;
+}
+
+// Vaccine Day Chart
+function vaccineDayChart(vaccinesPerDayData, vaccinesPerDayLabelData) {
+    let vaccinesPerDayChartCanvas = document.createElement('canvas');
+    vaccinesPerDayChartCanvas.id = "vaccines-day-chart";
+    let vaccinesPerDayChartDiv = document.createElement('div');
+    vaccinesPerDayChartDiv.id = "vaccines-day-chart-div";
+    vaccinesPerDayChartDiv.appendChild(vaccinesPerDayChartCanvas);
+    document.body.appendChild(vaccinesPerDayChartDiv);
+
+    new Chart(document.getElementById('vaccines-day-chart'), {
+        type: 'line',
+        data: {
+            labels: vaccinesPerDayLabelData,
+            datasets: [
+                {
+                    label: "Max Number Of Days",
+                    borderColor: '#DC3912',
+                    data: vaccinesPerDayData
+                }
+            ]
+        },
+        options: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: ['Vaccines Per Day', 'Maximum Number of Days of Vaccination']
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Vaccines Per Day'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: ['Maximum Number of Days of Vaccination', 'Logairthmic Scale']
+                    },
+                    type: 'logarithmic'
+                }
+            }
+
+        }
+    });
 }
 
 // Event Listener for Calculate
@@ -153,9 +244,7 @@ document.getElementById("calculate").onclick = () => {
         // Removing the features row from main dataset
         dataColumns = data.shift();
 
-        // Using only first 20 rows
         // data = data.slice(0, 20);
-
         //Updating Category column for values 4 and 5 accoording to birthdate
         updateCatetgory(data, "1976-05-10T00:00:00");
 
@@ -170,48 +259,88 @@ document.getElementById("calculate").onclick = () => {
         // Updating Birthdate and Registration Time columns to Date object
         updateDateTime(dataset);
 
-        let datasetDaysSpan = findDaysSpan(dataset);
-        console.log(datasetDaysSpan);
+        dataset.sort((a, b) => a[5] - b[5]);
 
-        let algorithm = document.querySelector('input[name="algorithm"]:checked').value;
+        console.log(dataset);
+        let datasetDaysSpan = findDaysSpan(dataset[0][5], dataset[dataset.length - 1][5]);
+
+        // let currentAlgorithm = document.querySelector('input[name="algorithm"]:checked').value;
+
+        let vaccineSchedulerData = getVaccineSchedulerData(dataset, datasetDaysSpan);
 
         let vaccinesPerDayData = [];
-        let vaccinesPerDayLabelData = [];
-        for (let vaccinesPerDay = 1;; vaccinesPerDay += 1) {
-            vaccinesPerDayLabelData.push(vaccinesPerDay);
-            let daysToGetVaccineted = calculateSchedule(dataset, vaccinesPerDay, 'fcfs');
-            vaccinesPerDayData.push(daysToGetVaccineted);
-            if (daysToGetVaccineted == datasetDaysSpan) {
-                break;
-            }
-        }
+        vaccineSchedulerData[0].forEach(element => {
+            vaccinesPerDayData.push(element.vaccinetedPerDay.length);
+        });
+        let vaccinesPerDayLabelData = Array.from(Array(vaccineSchedulerData[0].length + 1).keys()).slice(1,);
 
-        let vaccinesPerDayChartCanvas = document.createElement('canvas');
-        vaccinesPerDayChartCanvas.id = "vaccines-day-chart";
-        let vaccinesPerDayChartDiv = document.createElement('div');
-        vaccinesPerDayChartDiv.id = "vaccines-day-chart-div";
-        vaccinesPerDayChartDiv.appendChild(vaccinesPerDayChartCanvas);
-        document.body.appendChild(vaccinesPerDayChartDiv);
+        vaccineDayChart(vaccinesPerDayData, vaccinesPerDayLabelData);
 
-        new Chart(document.getElementById('vaccines-day-chart'), {
+        console.log(vaccineSchedulerData);
+        let scoreChartData = [[], []];
+
+        vaccineSchedulerData.forEach((algorithmData, algorithmIndex) => {
+            algorithmData.forEach(datapoint => {
+                let currentScore = 0;
+                datapoint.vaccineSequence.forEach((element, index) => {
+                    currentScore += (5 * (dataset.length - datapoint.daysFromRegistration[index]) + (6 - dataset[element][4])) ** 2;
+                });
+                scoreChartData[algorithmIndex].push(currentScore ** 0.5);
+            });
+        });
+        console.log(scoreChartData);
+
+        let scoreChartCanvas = document.createElement('canvas');
+        scoreChartCanvas.id = "score-chart";
+        let scoreChartDiv = document.createElement('div');
+        scoreChartDiv.id = "score-chart-div";
+        scoreChartDiv.appendChild(scoreChartCanvas);
+        document.body.appendChild(scoreChartDiv);
+
+        new Chart(document.getElementById('score-chart'), {
             type: 'line',
             data: {
                 labels: vaccinesPerDayLabelData,
                 datasets: [
+                    // {
+                    //     label: "FCFS",
+                    //     borderColor: '#109618',
+                    //     data: scoreChartData[0].map(x=>0)
+                    // },
+                    // {
+                    //     label: "Priority",
+                    //     borderColor: '#990099',
+                    //     data: scoreChartData[1].map((x,i)=>scoreChartData[1][i]-scoreChartData[0][i])
+                    // }
                     {
-                        label: "Max Number Of Days",
-                        borderColor: '#DC3912',
-                        data: vaccinesPerDayData
+                        label: "FCFS",
+                        borderColor: '#109618',
+                        data: scoreChartData[0],
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: "Priority",
+                        borderColor: '#990099',
+                        data: scoreChartData[1],
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: "Difference (Priority - FCFS)",
+                        borderColor: '#FF9900',
+                        data: scoreChartData[1].map((x, i) => (x - scoreChartData[0][i])),
+                        yAxisID: 'y1'
                     }
+
                 ]
             },
             options: {
                 plugins: {
                     title: {
                         display: true,
-                        text: ['Vaccines Per Day', 'Maximum Number of Days of Vaccination']
+                        text: ['Scoring Algorithms', 'FCFS vs Priority']
                     }
                 },
+                stacked: true,
                 scales: {
                     x: {
                         display: true,
@@ -224,12 +353,26 @@ document.getElementById("calculate").onclick = () => {
                         display: true,
                         title: {
                             display: true,
-                            text: ['Maximum Number of Days of Vaccination', 'Logairthmic Scale']
+                            text: ['Score']
                         },
-                        type: 'logarithmic'
+                        position: 'left'
+                        // type: 'logarithmic'
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        display: true,
+                        title: {
+                            display: true,
+                            text: ['Score Difference']
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        },
                     }
-                }
 
+                }
             }
         });
     });
