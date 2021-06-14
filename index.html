@@ -1,28 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vaccine Scheduler</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
     <script src="https://unpkg.com/read-excel-file@4.x/bundle/read-excel-file.min.js"></script>
 </head>
 
 <body>
     <h1>Vaccine Scheduler</h1>
     <form>
-        <strong><p>Select file with registrations : </p></strong>
-        <input type="file" id="file"><br>
-        <strong><p>Select Your algorithm : </p></strong>
-        <input type="radio" name="algorithm" id="fcfs" value="fcfs" checked>
+        <strong>
+            <p>Select file with registrations :</p>
+        </strong>
+        <input type="file" id="file" /><br />
+        <strong>
+            <p>Select Your algorithm :</p>
+        </strong>
+        <input type="radio" name="algorithm" id="fcfs" value="fcfs" checked />
         <label for="fcfs">FCFS</label>
-        <input type="radio" name="algorithm" id="priority" value="priority">
-        <label for="priority">Priority</label><br>
+        <input type="radio" name="algorithm" id="priority" value="priority" />
+        <label for="priority">Priority</label><br />
+        <label for="vaccines-per-day">Enter Number Of Vaccines Per Day : </label>
+        <input type="number" name="vaccines-per-day" id="vaccines-per-day" value="1" min="1" />
+        <br />
         <button type="button" id="calculate">Calculate</button>
     </form>
-    <button id="show-data-button" class="visible">Show Data</button>
+    <button id="show-data-button" class="visible">Show Data</button><br />
 </body>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="script.js"></script>
+
 </html>

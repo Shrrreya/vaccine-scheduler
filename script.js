@@ -1,6 +1,3 @@
-// Get a column of the data as an array
-const arrayColumn = (arr, n) => arr.map((x) => x[n]);
-
 // Function for displaying the data as table
 function showData(columnNames, dataArray) {
     let table = document.createElement('table');
@@ -37,12 +34,14 @@ function stringToDate(d) {
     let date = d.substr(0, 2);
     let month = d.substr(3, 2);
     let year = d.substr(6, 4);
-    let result = year + "-" + month + "-" + date;
+    // let result = year + "-" + month + "-" + date;
+    let result = `${year}-${month}-${date}`;
     if (d.length == 19) {   // for Registration Time Stamp
         let hour = d.substr(11, 2);
         let minute = d.substr(14, 2);
         let second = d.substr(17, 2);
-        result += "T" + hour + ":" + minute + ":" + second;
+        // result += "T" + hour + ":" + minute + ":" + second;
+        result += `T${hour}:${minute}:${second}`;
     }
     return new Date(result);
 }
@@ -208,6 +207,7 @@ function vaccineDayChart(vaccinesPerDayData, vaccinesPerDayLabelData) {
                     text: ['Vaccines Per Day', 'Maximum Number of Days of Vaccination']
                 }
             },
+            responsive: true,
             scales: {
                 x: {
                     display: true,
@@ -226,6 +226,85 @@ function vaccineDayChart(vaccinesPerDayData, vaccinesPerDayLabelData) {
                 }
             }
 
+        }
+    });
+}
+
+// Score Chart
+function scoreChart(scoreChartData, scoreLabelData) {
+
+    let scoreChartCanvas = document.createElement('canvas');
+    scoreChartCanvas.id = "score-chart";
+    let scoreChartDiv = document.createElement('div');
+    scoreChartDiv.id = "score-chart-div";
+    scoreChartDiv.appendChild(scoreChartCanvas);
+    document.body.appendChild(scoreChartDiv);
+
+    new Chart(document.getElementById('score-chart'), {
+        type: 'line',
+        data: {
+            labels: scoreLabelData,
+            datasets: [
+                {
+                    label: "FCFS",
+                    borderColor: '#109618',
+                    data: scoreChartData[0],
+                    yAxisID: 'y'
+                },
+                {
+                    label: "Priority",
+                    borderColor: '#990099',
+                    data: scoreChartData[1],
+                    yAxisID: 'y'
+                },
+                {
+                    label: "Difference (Priority - FCFS)",
+                    borderColor: '#FF9900',
+                    data: scoreChartData[1].map((x, i) => (x - scoreChartData[0][i])),
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: ['Scoring Algorithms', 'FCFS vs Priority']
+                }
+            },
+            stacked: true,
+            responsive: true,
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Vaccines Per Day'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: ['Score']
+                    },
+                    position: 'left'
+                    // type: 'logarithmic'
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    display: true,
+                    title: {
+                        display: true,
+                        text: ['Score Difference']
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
         }
     });
 }
@@ -267,6 +346,9 @@ document.getElementById("calculate").onclick = () => {
         // let currentAlgorithm = document.querySelector('input[name="algorithm"]:checked').value;
 
         let vaccineSchedulerData = getVaccineSchedulerData(dataset, datasetDaysSpan);
+        console.log(vaccineSchedulerData);
+
+        // Vaccine Per Day Chart
 
         let vaccinesPerDayData = [];
         vaccineSchedulerData[0].forEach(element => {
@@ -276,7 +358,8 @@ document.getElementById("calculate").onclick = () => {
 
         vaccineDayChart(vaccinesPerDayData, vaccinesPerDayLabelData);
 
-        console.log(vaccineSchedulerData);
+        //Score Chart
+
         let scoreChartData = [[], []];
 
         vaccineSchedulerData.forEach((algorithmData, algorithmIndex) => {
@@ -289,89 +372,152 @@ document.getElementById("calculate").onclick = () => {
             });
         });
         console.log(scoreChartData);
+        let scoreLabelData = Array.from(Array(vaccineSchedulerData[0].length + 1).keys()).slice(1,);
 
-        let scoreChartCanvas = document.createElement('canvas');
-        scoreChartCanvas.id = "score-chart";
-        let scoreChartDiv = document.createElement('div');
-        scoreChartDiv.id = "score-chart-div";
-        scoreChartDiv.appendChild(scoreChartCanvas);
-        document.body.appendChild(scoreChartDiv);
+        scoreChart(scoreChartData, scoreLabelData);
 
-        new Chart(document.getElementById('score-chart'), {
-            type: 'line',
+        // Category Chart
+
+        // let numberOfVaccinesPerDayLabel = document.createElement('label');
+        // numberOfVaccinesPerDayLabel.for = 'vaccines-per-day';
+        // numberOfVaccinesPerDayLabel.innerHTML = '<strong>Enter Number Of Vaccines Per Day : </strong>';
+        // document.body.appendChild(numberOfVaccinesPerDayLabel);
+
+        // let numberOfVaccinesPerDayInput = document.createElement('input');
+        // numberOfVaccinesPerDayInput.type = 'number';
+        // numberOfVaccinesPerDayInput.id = 'vaccines-per-day';
+        // numberOfVaccinesPerDayInput.name = 'vaccines-per-day';
+        // numberOfVaccinesPerDayInput.value = 1;
+        // numberOfVaccinesPerDayInput.min = 1;
+        // numberOfVaccinesPerDayInput.max = vaccineSchedulerData[0].length;
+        // document.body.appendChild(numberOfVaccinesPerDayInput);
+
+        let numberOfVaccinesPerDay = Number(document.getElementById('vaccines-per-day').value);
+
+        let categoryChartData = [];
+        let algorithms = ['fcfs', 'priority'];
+        algorithms.forEach((algorithm, algorithmIndex) => {
+            let currentElement = vaccineSchedulerData[algorithmIndex][numberOfVaccinesPerDay - 1];
+            let algorithmCategoryChartData = [];
+            for (let i = 0; i < 5; i++) {
+                algorithmCategoryChartData.push(new Array(currentElement.vaccinetedPerDay.length).fill(0));
+            }
+            console.log(algorithmCategoryChartData);
+            for (let i = 1; i <= currentElement.vaccinetedPerDay.length; i++) {
+                let currentDayIndexes = currentElement.vaccineSequence.filter((x, ind) => currentElement.dayOfVaccine[ind] == i);
+                currentDayIndexes.forEach(element => {
+                    algorithmCategoryChartData[dataset[element][4] - 1][i - 1]++;
+                });
+            }
+            categoryChartData.push(algorithmCategoryChartData);
+        });
+        console.log(categoryChartData);
+
+        let categoryLabelData = Array.from(Array(categoryChartData[0][0].length + 1).keys()).slice(1,);
+
+        let categoryChartCanvas = document.createElement('canvas');
+        categoryChartCanvas.id = "category-chart";
+        let categoryChartDiv = document.createElement('div');
+        categoryChartDiv.id = "category-chart-div";
+        categoryChartDiv.appendChild(categoryChartCanvas);
+        document.body.appendChild(categoryChartDiv);
+
+        new Chart(document.getElementById('category-chart'), {
+            type: 'bar',
             data: {
-                labels: vaccinesPerDayLabelData,
+                labels: categoryLabelData,
                 datasets: [
-                    // {
-                    //     label: "FCFS",
-                    //     borderColor: '#109618',
-                    //     data: scoreChartData[0].map(x=>0)
-                    // },
-                    // {
-                    //     label: "Priority",
-                    //     borderColor: '#990099',
-                    //     data: scoreChartData[1].map((x,i)=>scoreChartData[1][i]-scoreChartData[0][i])
-                    // }
                     {
-                        label: "FCFS",
-                        borderColor: '#109618',
-                        data: scoreChartData[0],
-                        yAxisID: 'y'
+                        label: "FCFS - Category 1",
+                        backgroundColor: '#03254C',
+                        data: categoryChartData[0][0],
+                        stack: 'FCFS'
                     },
                     {
-                        label: "Priority",
-                        borderColor: '#990099',
-                        data: scoreChartData[1],
-                        yAxisID: 'y'
+                        label: "FCFS - Category 2",
+                        backgroundColor: '#1167B1',
+                        data: categoryChartData[0][1],
+                        stack: 'FCFS'
                     },
                     {
-                        label: "Difference (Priority - FCFS)",
-                        borderColor: '#FF9900',
-                        data: scoreChartData[1].map((x, i) => (x - scoreChartData[0][i])),
-                        yAxisID: 'y1'
-                    }
-
+                        label: "FCFS - Category 3",
+                        backgroundColor: '#187BCD',
+                        data: categoryChartData[0][2],
+                        stack: 'FCFS'
+                    },
+                    {
+                        label: "FCFS - Category 4",
+                        backgroundColor: '#2A9DF4',
+                        data: categoryChartData[0][3],
+                        stack: 'FCFS'
+                    },
+                    {
+                        label: "FCFS - Category 5",
+                        backgroundColor: '#D0EFFF',
+                        data: categoryChartData[0][4],
+                        stack: 'FCFS'
+                    },
+                    {
+                        label: "Priority - Category 1",
+                        backgroundColor: '#1E5631',
+                        data: categoryChartData[1][0],
+                        stack: 'Priority'
+                    },
+                    {
+                        label: "Priority - Category 2",
+                        backgroundColor: '#4C9A2A',
+                        data: categoryChartData[1][1],
+                        stack: 'Priority'
+                    },
+                    {
+                        label: "Priority - Category 3",
+                        backgroundColor: '#76BA1B',
+                        data: categoryChartData[1][2],
+                        stack: 'Priority'
+                    },
+                    {
+                        label: "Priority - Category 4",
+                        backgroundColor: '#A4DE02',
+                        data: categoryChartData[1][3],
+                        stack: 'Priority'
+                    },
+                    {
+                        label: "Priority - Category 5",
+                        backgroundColor: '#ACDF87',
+                        data: categoryChartData[1][4],
+                        stack: 'Priority'
+                    },
                 ]
             },
             options: {
                 plugins: {
                     title: {
                         display: true,
-                        text: ['Scoring Algorithms', 'FCFS vs Priority']
+                        text: ['Vaccines To a Category', 'Comparision of algorithms to which category vaccine given', `Vaccines Per Day : ${numberOfVaccinesPerDay}`]
                     }
                 },
                 stacked: true,
+                responsive: true,
                 scales: {
                     x: {
                         display: true,
                         title: {
                             display: true,
-                            text: 'Vaccines Per Day'
-                        }
+                            text: ['Algorithm', 'Day Number']
+                        },
+                        stacked: true
                     },
                     y: {
                         display: true,
                         title: {
                             display: true,
-                            text: ['Score']
+                            text: ['Number of Vaccines to a particular category']
                         },
-                        position: 'left'
-                        // type: 'logarithmic'
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        display: true,
-                        title: {
-                            display: true,
-                            text: ['Score Difference']
-                        },
-                        grid: {
-                            drawOnChartArea: false
-                        },
+                        stacked: true,
+                        ticks: {
+                            stepSize: 1
+                        }
                     }
-
                 }
             }
         });
