@@ -11,3 +11,19 @@ td {
 .visible {
   display: none;
 }
+
+#vaccine-day-chart-div {
+  width: 80%;
+}
+
+#score-chart-div {
+  width: 80%;
+}
+
+#category-chart-div {
+  width: 80%;
+}
+
+#doughnut-category-chart-div {
+  width: 40%;
+}

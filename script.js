@@ -309,6 +309,172 @@ function scoreChart(scoreChartData, scoreLabelData) {
     });
 }
 
+//Category Chart
+function categoryChart(categoryChartData, categoryLabelData, numberOfVaccinesPerDay) {
+    let categoryChartCanvas = document.createElement('canvas');
+    categoryChartCanvas.id = "category-chart";
+    let categoryChartDiv = document.createElement('div');
+    categoryChartDiv.id = "category-chart-div";
+    categoryChartDiv.appendChild(categoryChartCanvas);
+    document.body.appendChild(categoryChartDiv);
+
+    new Chart(document.getElementById('category-chart'), {
+        type: 'bar',
+        data: {
+            labels: categoryLabelData,
+            datasets: [
+                {
+                    label: "FCFS - Category 1",
+                    backgroundColor: '#0C0636',
+                    data: categoryChartData[0][0],
+                    stack: 'FCFS'
+                },
+                {
+                    label: "FCFS - Category 2",
+                    backgroundColor: '#095169',
+                    data: categoryChartData[0][1],
+                    stack: 'FCFS'
+                },
+                {
+                    label: "FCFS - Category 3",
+                    backgroundColor: '#059B9A',
+                    data: categoryChartData[0][2],
+                    stack: 'FCFS'
+                },
+                {
+                    label: "FCFS - Category 4",
+                    backgroundColor: '#53BA83',
+                    data: categoryChartData[0][3],
+                    stack: 'FCFS'
+                },
+                {
+                    label: "FCFS - Category 5",
+                    backgroundColor: '#9FD86B',
+                    data: categoryChartData[0][4],
+                    stack: 'FCFS'
+                },
+                {
+                    label: "Priority - Category 1",
+                    backgroundColor: '#402929',
+                    data: categoryChartData[1][0],
+                    stack: 'Priority'
+                },
+                {
+                    label: "Priority - Category 2",
+                    backgroundColor: '#B80000',
+                    data: categoryChartData[1][1],
+                    stack: 'Priority'
+                },
+                {
+                    label: "Priority - Category 3",
+                    backgroundColor: '#FF4000',
+                    data: categoryChartData[1][2],
+                    stack: 'Priority'
+                },
+                {
+                    label: "Priority - Category 4",
+                    backgroundColor: '#FFA700',
+                    data: categoryChartData[1][3],
+                    stack: 'Priority'
+                },
+                {
+                    label: "Priority - Category 5",
+                    backgroundColor: '#F8F9AC',
+                    data: categoryChartData[1][4],
+                    stack: 'Priority'
+                },
+            ]
+        },
+        options: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: ['Vaccines To a Category', 'Comparision of algorithms to which category vaccine given', `Vaccines Per Day : ${numberOfVaccinesPerDay}`]
+                }
+            },
+            stacked: true,
+            responsive: true,
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: ['Algorithm', 'Day Number']
+                    },
+                    stacked: true
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: ['Number of Vaccines to a particular category']
+                    },
+                    stacked: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Doughtnut Category Chart
+function doughnutCategoryChart(doughnutCategoryChartData) {
+    let doughnutCategoryChartCanvas = document.createElement('canvas');
+    doughnutCategoryChartCanvas.id = "doughnut-category-chart";
+    let doughnutCategoryChartDiv = document.createElement('div');
+    doughnutCategoryChartDiv.id = "doughnut-category-chart-div";
+    doughnutCategoryChartDiv.appendChild(doughnutCategoryChartCanvas);
+    document.body.appendChild(doughnutCategoryChartDiv);
+
+    new Chart(document.getElementById('doughnut-category-chart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Category 1', 'Category 2', 'Category 3', 'Category 4', 'Category 5'],
+            datasets: [
+                {
+                    label: "Category Data",
+                    data: doughnutCategoryChartData,
+                    backgroundColor: ['#370617', '#9d0208', '#dc2f02', '#f48c06', '#ffba08']
+                }
+            ]
+        },
+        options: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: ['Category Distribution']
+                }
+            },
+            responsive: true,
+        }
+    });
+}
+
+// Get Schedule Date
+function getSpecificSchedule(aadharNumber, currentAlgorithm, numberOfVaccinesPerDay, dataset, vaccineSchedulerData) {
+    algorithmMap = {
+        'fcfs': 0,
+        'priority': 1
+    }
+    console.log(dataset);
+    let currentElementIndex = dataset.findIndex(x => x[1] == aadharNumber);
+    let aadharResult = document.createElement('p');
+    if (currentElementIndex == -1) {
+        aadharResult.innerText = "Enter Valid Aadhar Number.";
+    }
+    else {
+        let dayAfterStart = (vaccineSchedulerData[algorithmMap[currentAlgorithm]][numberOfVaccinesPerDay].dayOfVaccine[
+            vaccineSchedulerData[algorithmMap[currentAlgorithm]][numberOfVaccinesPerDay].vaccineSequence.findIndex(x => x == currentElementIndex)]);
+        console.log(dayAfterStart);
+        let resultDate = new Date(dataset[0][5]);
+        resultDate.setHours(0, 0, 0);
+        resultDate.setDate(resultDate.getDate() + dayAfterStart);
+        aadharResult.innerHTML = resultDate;
+    }
+    document.body.appendChild(aadharResult);
+}
 // Event Listener for Calculate
 document.getElementById("calculate").onclick = () => {
 
@@ -341,9 +507,8 @@ document.getElementById("calculate").onclick = () => {
         dataset.sort((a, b) => a[5] - b[5]);
 
         console.log(dataset);
-        let datasetDaysSpan = findDaysSpan(dataset[0][5], dataset[dataset.length - 1][5]);
 
-        // let currentAlgorithm = document.querySelector('input[name="algorithm"]:checked').value;
+        let datasetDaysSpan = findDaysSpan(dataset[0][5], dataset[dataset.length - 1][5]);
 
         let vaccineSchedulerData = getVaccineSchedulerData(dataset, datasetDaysSpan);
         console.log(vaccineSchedulerData);
@@ -378,21 +543,10 @@ document.getElementById("calculate").onclick = () => {
 
         // Category Chart
 
-        // let numberOfVaccinesPerDayLabel = document.createElement('label');
-        // numberOfVaccinesPerDayLabel.for = 'vaccines-per-day';
-        // numberOfVaccinesPerDayLabel.innerHTML = '<strong>Enter Number Of Vaccines Per Day : </strong>';
-        // document.body.appendChild(numberOfVaccinesPerDayLabel);
-
-        // let numberOfVaccinesPerDayInput = document.createElement('input');
-        // numberOfVaccinesPerDayInput.type = 'number';
-        // numberOfVaccinesPerDayInput.id = 'vaccines-per-day';
-        // numberOfVaccinesPerDayInput.name = 'vaccines-per-day';
-        // numberOfVaccinesPerDayInput.value = 1;
-        // numberOfVaccinesPerDayInput.min = 1;
-        // numberOfVaccinesPerDayInput.max = vaccineSchedulerData[0].length;
-        // document.body.appendChild(numberOfVaccinesPerDayInput);
-
         let numberOfVaccinesPerDay = Number(document.getElementById('vaccines-per-day').value);
+        if (numberOfVaccinesPerDay > vaccineSchedulerData[0].length) {
+            numberOfVaccinesPerDay = vaccineSchedulerData[0].length;
+        }
 
         let categoryChartData = [];
         let algorithms = ['fcfs', 'priority'];
@@ -402,7 +556,6 @@ document.getElementById("calculate").onclick = () => {
             for (let i = 0; i < 5; i++) {
                 algorithmCategoryChartData.push(new Array(currentElement.vaccinetedPerDay.length).fill(0));
             }
-            console.log(algorithmCategoryChartData);
             for (let i = 1; i <= currentElement.vaccinetedPerDay.length; i++) {
                 let currentDayIndexes = currentElement.vaccineSequence.filter((x, ind) => currentElement.dayOfVaccine[ind] == i);
                 currentDayIndexes.forEach(element => {
@@ -412,114 +565,42 @@ document.getElementById("calculate").onclick = () => {
             categoryChartData.push(algorithmCategoryChartData);
         });
         console.log(categoryChartData);
-
         let categoryLabelData = Array.from(Array(categoryChartData[0][0].length + 1).keys()).slice(1,);
 
-        let categoryChartCanvas = document.createElement('canvas');
-        categoryChartCanvas.id = "category-chart";
-        let categoryChartDiv = document.createElement('div');
-        categoryChartDiv.id = "category-chart-div";
-        categoryChartDiv.appendChild(categoryChartCanvas);
-        document.body.appendChild(categoryChartDiv);
+        categoryChart(categoryChartData, categoryLabelData, numberOfVaccinesPerDay);
 
-        new Chart(document.getElementById('category-chart'), {
-            type: 'bar',
-            data: {
-                labels: categoryLabelData,
-                datasets: [
-                    {
-                        label: "FCFS - Category 1",
-                        backgroundColor: '#03254C',
-                        data: categoryChartData[0][0],
-                        stack: 'FCFS'
-                    },
-                    {
-                        label: "FCFS - Category 2",
-                        backgroundColor: '#1167B1',
-                        data: categoryChartData[0][1],
-                        stack: 'FCFS'
-                    },
-                    {
-                        label: "FCFS - Category 3",
-                        backgroundColor: '#187BCD',
-                        data: categoryChartData[0][2],
-                        stack: 'FCFS'
-                    },
-                    {
-                        label: "FCFS - Category 4",
-                        backgroundColor: '#2A9DF4',
-                        data: categoryChartData[0][3],
-                        stack: 'FCFS'
-                    },
-                    {
-                        label: "FCFS - Category 5",
-                        backgroundColor: '#D0EFFF',
-                        data: categoryChartData[0][4],
-                        stack: 'FCFS'
-                    },
-                    {
-                        label: "Priority - Category 1",
-                        backgroundColor: '#1E5631',
-                        data: categoryChartData[1][0],
-                        stack: 'Priority'
-                    },
-                    {
-                        label: "Priority - Category 2",
-                        backgroundColor: '#4C9A2A',
-                        data: categoryChartData[1][1],
-                        stack: 'Priority'
-                    },
-                    {
-                        label: "Priority - Category 3",
-                        backgroundColor: '#76BA1B',
-                        data: categoryChartData[1][2],
-                        stack: 'Priority'
-                    },
-                    {
-                        label: "Priority - Category 4",
-                        backgroundColor: '#A4DE02',
-                        data: categoryChartData[1][3],
-                        stack: 'Priority'
-                    },
-                    {
-                        label: "Priority - Category 5",
-                        backgroundColor: '#ACDF87',
-                        data: categoryChartData[1][4],
-                        stack: 'Priority'
-                    },
-                ]
-            },
-            options: {
-                plugins: {
-                    title: {
-                        display: true,
-                        text: ['Vaccines To a Category', 'Comparision of algorithms to which category vaccine given', `Vaccines Per Day : ${numberOfVaccinesPerDay}`]
-                    }
-                },
-                stacked: true,
-                responsive: true,
-                scales: {
-                    x: {
-                        display: true,
-                        title: {
-                            display: true,
-                            text: ['Algorithm', 'Day Number']
-                        },
-                        stacked: true
-                    },
-                    y: {
-                        display: true,
-                        title: {
-                            display: true,
-                            text: ['Number of Vaccines to a particular category']
-                        },
-                        stacked: true,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
-                }
-            }
+        // Doughnut Chart 
+        let doughnutCategoryChartData = new Array(5).fill(0);
+        dataset.forEach(element => {
+            doughnutCategoryChartData[element[4] - 1]++;
         });
+        console.log(doughnutCategoryChartData);
+        doughnutCategoryChart(doughnutCategoryChartData);
+
+        // Aadhar Number Result
+        let aadharNumberInputLabel = document.createElement('label');
+        aadharNumberInputLabel.for = 'aadhar-number';
+        aadharNumberInputLabel.innerHTML = '<strong>Enter Your Aadhar Number : </strong>';
+        document.body.appendChild(aadharNumberInputLabel);
+
+        let aadharNumberInput = document.createElement("input");
+        aadharNumberInput.id = 'aadhar-number';
+        aadharNumberInput.name = 'aadhar-number';
+        aadharNumberInput.type = 'number';
+        aadharNumberInput.min = 200000000000;
+        aadharNumberInput.max = 999999999999;
+        aadharNumberInput.value = dataset[0][1];
+        document.body.appendChild(aadharNumberInput);
+
+        let aadharNumberSubmit = document.createElement('button');
+        aadharNumberSubmit.innerText = "Get Date";
+        aadharNumberSubmit.id = "aadhar-number-button";
+        document.body.appendChild(aadharNumberSubmit);
+
+        document.getElementById('aadhar-number-button').onclick = () => {
+            let aadharNumber = Number(document.getElementById('aadhar-number').value);
+            let currentAlgorithm = document.querySelector('input[name="algorithm"]:checked').value;
+            getSpecificSchedule(aadharNumber, currentAlgorithm, numberOfVaccinesPerDay, dataset, vaccineSchedulerData);
+        };
     });
 };
