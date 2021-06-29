@@ -471,7 +471,8 @@ function getSpecificSchedule(aadharNumber, currentAlgorithm, numberOfVaccinesPer
         let resultDate = new Date(dataset[0][5]);
         resultDate.setHours(0, 0, 0);
         resultDate.setDate(resultDate.getDate() + dayAfterStart);
-        aadharResult.innerHTML = resultDate;
+        aadharResult.innerHTML = `${dataset[currentElementIndex][0]} : 
+        Your Vaccination Date is : ${resultDate.getDate()}/${resultDate.getMonth()}/${resultDate.getFullYear()}`;
     }
     document.body.appendChild(aadharResult);
 }
